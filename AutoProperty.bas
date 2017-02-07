@@ -360,6 +360,8 @@ Constructor Definition(ByRef value As String, ByRef valid As BOOLEAN)
 			
 			._return = Type<Section>(n1, n2)
 			
+			this.ParseCommand()
+
 			valid = TRUE
 			Exit constructor
 		EndIf
@@ -424,8 +426,15 @@ Constructor Definition(ByRef value As String, ByRef valid As BOOLEAN)
 			._returnSpecifier = Type<Section>(n1, n2)
 			n1 = n2 + 1
 		EndIf
-
 		If LCase(word) <> "as" Then
+			If word = "" Then
+				' this is a setter
+				this.ParseCommand()
+
+				valid = TRUE
+				Exit Constructor
+			
+			EndIf
 			__Error()
 		EndIf
 
@@ -622,6 +631,7 @@ Sub Main()
 	'
 	Dim As String txt, outS
 
+
 	txt = get_clipboard()
 
 	Dim b As BOOLEAN	
@@ -630,7 +640,7 @@ Sub Main()
 	If b = FALSE Then
 		Exit Sub 
 	EndIf
-	
+
 	Select Case d.AutoCommand
 		Case AutoCommands.None
 			If d.IsDeclarationGet Then
@@ -651,3 +661,6 @@ Sub Main()
 End Sub
 
 Main()
+'Sleep
+'declare property MyProp(byref value as string) '~t MyClass ~s
+'? "xxxxxxxxx"
