@@ -1,0 +1,32 @@
+[Project]
+Version=3
+Description=Ascii Chart
+Api=fb (FreeBASIC),win (Windows)
+Grouping=1
+AddMainFiles=1
+AddModuleFiles=1
+ResExport=
+CompileIfNewer=0
+IncVersion=0
+RunCmd=0
+[Make]
+Current=1
+1=Windows GUI (debug),fbc -g -s gui -exx
+Recompile=2
+Module=Module Build,fbc -c
+Output=
+Run=
+Delete=
+[TabOrder]
+TabOrder=
+[File]
+1=AsciiChart.rc
+2=AsciiChart.bas
+3=AsciiChart.bi
+Main=2
+[BreakPoint]
+2=
+3=
+1=
+[FileInfo]
+1=0,17,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0

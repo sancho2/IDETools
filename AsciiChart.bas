@@ -9,6 +9,7 @@
 
 #Include "AsciiChart.bi"
 
+Declare Sub ReLoadAscii(ByVal hWin As HWND, start As ubyte)
 Declare Sub set_clipboard (Byref x As String)
 Declare Sub CreatecmdButtons(ByVal hWin As HWND)
 Declare Function DlgProc(ByVal hWin As HWND, ByVal uMsg As UINT, ByVal wParam As WPARAM, ByVal lParam As LPARAM) As Integer
@@ -67,6 +68,12 @@ Function DlgProc(ByVal hWin As HWND,ByVal uMsg As UINT,ByVal wParam As WPARAM,By
 				Case cmdExit
 					EndDialog(hWin, 0)
 					'
+				Case cmdPage
+					If event = BN_CLICKED Then
+						aStart = IIf(aStart = 0, 128, 0)
+						ReLoadAscii(hWin, aStart) 
+					EndIf
+						
 				Case cmdCopy
 					If event = BN_CLICKED Then
 						Dim s As String
@@ -119,52 +126,116 @@ Function DlgProc(ByVal hWin As HWND,ByVal uMsg As UINT,ByVal wParam As WPARAM,By
 
 End Function
 Sub CreatecmdButtons(ByVal hWin As HWND)
-	Dim As HWND tBox
-	Dim As hwnd ccc
-	Dim As Integer nX, nY, n
-	Dim As Integer u = GetConsoleoutputCP()
-	Dim As String s = Str(u)
-
+	Dim As HWND hBtn, hTmp
+	Dim As HDC dc
+	Dim As SIZE sz
+	Dim As Integer nX, nY, n, txtLen, txtHght, dlgWidth, dlgHeight, btn, btnHght, clientHeight, btnRow
+	Dim As String s 
+	Dim As RECT r, dlgRect 
+	Const As UByte MARGIN = 5, COPY_OFFSET = 123
+	Dim As ZString * 256 z
+	
 	dim As HFONT hfont1 = CreateFont( _
 		12, 0, 0, 0, _
 		FW_DONTCARE, _
 		FALSE, _
 		FALSE, _
 		FALSE, _
-		DEFAULT_CHARSET, _
+		ANSI_CHARSET, _ 'DEFAULT_CHARSET, _
 		OUT_DEFAULT_PRECIS, _
 		CLIP_DEFAULT_PRECIS, _
 		DEFAULT_QUALITY, _
 		DEFAULT_PITCH, _
 		"Terminal")	
 
-	For y As UByte = 1 To 16
-		For x As UByte = 1 To 8
-			nY = (y - 1) * 18 + 5
-			nX = (x - 1) * 62 + 3
+	sendmessage(hWin, WM_SETFONT, Cast(LPARAM, hfont1), 0)
+
+	dc = GetDC(hWin)
+	SetMapMode(dc,MM_TEXT)
+	
+	' get an estimate of the size of button face
+	GetTextExtentPoint32(dc, "888 - WWW", 9, @sz)
+	
+	ReleaseDC(hWin, dc)
+
+	' the dialog
+	GetClientRect(hWin, @dlgRect)
+	
+	txtLen = sz.cx
+	txtHght = sz.cy + 2
+	dlgWidth = txtLen * 8 + 16
+	dlgHeight = dlgRect.bottom - dlgRect.top 			' we need to add room for bottom button row
+	clientHeight = dlgHeight  
+
+	' the copy button  
+	hBtn = GetDlgItem(hWin, cmdCopy)
+	GetWindowRect(hBtn, @r)
+
+	' we now have the height of the button
+	btnHght = r.bottom - r.top
+	dlgHeight += btnHght + 16
+	
+	' resize the dialog
+	SetWindowPos(hWin, HWND_TOP, 0, 0, dlgWidth, dlgHeight, SWP_NOMOVE Or SWP_NOZORDER)  
+	
+	' align the page button to the left edge of the button grid
+	hTmp = hBtn 		' hold on to the copy button handle 
+	hBtn = GetDlgItem(hWin, cmdPage)
+	GetWindowRect(hBtn, @r)
+	
+	' move the page button
+	nX = MARGIN
+	btnRow = clientHeight - (btnHght + 8)
+	MoveWindow(hBtn, nX, btnRow, r.right - r.left, r.bottom - r.top,  1)
+	
+	' move the index
+	nX += r.right - r.left + 5
+	hBtn = GetDlgItem(hWin, lblIndex)
+	GetWindowRect(hBtn, @r)
+	MoveWindow(hBtn, nX, btnRow, r.right - r.left, r.bottom - r.top,  1)
+	
+	' move the value
+	nX += r.right - r.left + 5
+	hBtn = GetDlgItem(hWin, lblValue)
+	GetWindowRect(hBtn, @r)
+	MoveWindow(hBtn, nX, btnRow, r.right - r.left, r.bottom - r.top,  1)
+	  
+	' move the copy label
+	nX += r.right - r.left + 5
+	hBtn = GetDlgItem(hWin, lblCopy)
+	GetWindowRect(hBtn, @r)
+	MoveWindow(hBtn, nX, btnRow, r.right - r.left, r.bottom - r.top,  1)
+
+	' move the copy button
+	nX += r.right - r.left + 5
+	GetWindowRect(hTmp, @r)
+	MoveWindow(hTmp, nX, btnRow, r.right - r.left, r.bottom - r.top,  1)
+	
+	' move the exit button
+	hBtn = GetDlgItem(hWin, cmdExit)
+	GetWindowRect(hBtn, @r)
+	nx = (8 * txtLen + MARGIN) - (r.right - r.left)   
+	MoveWindow(hBtn, nX, btnRow, r.right - r.left, r.bottom - r.top,  1)
+	
+	For x As UByte = 1 To 8
+		For y As UByte = 1 To 16
+			nY = (y - 1) * txtHght + MARGIN
+			nX = (x - 1) * txtLen + MARGIN
 
 			Dim As String s
 			s = GetAsciiChar(n)
 			s = RightAlignNumber(n) + " - " + s
 
-			tBox = CreateWindowEx(NULL, StrPtr("BUTTON"),NULL, WS_CHILD Or WS_VISIBLE Or SS_SUNKEN Or SS_NOTIFY,_	'ES_READONLY
-				 nX, nY, 62, 18, hWin, Cast(HMENU, cmdButtons + n),GetModuleHandle(NULL), NULL)
+			hBtn = CreateWindowEx(NULL, StrPtr("BUTTON"),NULL, WS_CHILD Or WS_VISIBLE Or SS_SUNKEN Or SS_NOTIFY,_	'ES_READONLY
+				 nX, nY, txtLen, txtHght, hWin, Cast(HMENU, cmdButtons + n),GetModuleHandle(NULL), NULL)
 
-			SendMessage(tBox, WM_SETFONT, Cast(lparam, hfont1), 0)
-			SetWindowText(tbox, StrPtr(s))
-			s = GetAsciiChar(n + 128)
-			s = Str(n + 128) + " - " + s
+			SendMessage(hBtn, WM_SETFONT, Cast(lparam, hfont1), 0)
+			SetWindowText(hBtn, StrPtr(s))
 
-			tBox = CreateWindowEx(NULL, StrPtr("Button"),NULL,WS_CHILD Or WS_VISIBLE Or SS_SUNKEN Or SS_NOTIFY,_
-				 nX + 510, nY, 62, 18, hWin, Cast(HMENU, cmdButtons + n + 128),GetModuleHandle(NULL), NULL)
-
-			SendMessage(tBox, WM_SETFONT, Cast(lparam, hfont1), 0)
-			SetWindowText(tbox, StrPtr(s))
-			
-			s = GetAsciiChar(n)
 			n += 1
 		Next
 	Next
+	
 	hfont1 = CreateFont( _
 		18, 0, 0, 0, _
 		FW_DONTCARE, _
@@ -187,6 +258,24 @@ Sub CreatecmdButtons(ByVal hWin As HWND)
 		SendMessage(lbl, WM_SETFONT, Cast(lparam, hfont1), 0)
 	
 	
+End Sub
+Sub ReLoadAscii(ByVal hWin As HWND, start As ubyte)
+	'
+	Dim As HWND btnHandle
+	Dim As UByte n
+	Dim As String s	
+	
+	For x As UByte = 1 To 8
+		For y As UByte = 1 To 16
+			btnHandle = GetDlgItem(hWin, cmdButtons + n) 
+
+			s = GetAsciiChar(n + start)
+			s = Str(n + start) + " - " + s
+
+			SetWindowText(btnHandle, StrPtr(s))
+			n += 1
+		Next
+	Next
 End Sub
 
 Sub set_clipboard (Byref x As String)

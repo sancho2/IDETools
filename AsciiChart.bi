@@ -7,12 +7,15 @@ Declare Function GetAsciiChar(ByVal value As UByte) As String
 #Define dlgTest 1100
 #Define cmdExit 1104
 #Define cmdCopy 1105
+#Define cmdPage 1107
 #Define lblIndex 1106
 #Define lblCopy 1103
 #Define lblValue 1102
 
 #Define cmdButtons 1210
 
+
+Dim Shared As UByte aStart = 0
 Dim Shared hInstance As HMODULE
 Dim Shared As String NoPrintAscii(0 To 31)
 Sub LoadNoPrintAscii()
