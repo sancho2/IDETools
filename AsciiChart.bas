@@ -141,7 +141,7 @@ Sub CreatecmdButtons(ByVal hWin As HWND)
 		FALSE, _
 		FALSE, _
 		FALSE, _
-		ANSI_CHARSET, _ 'DEFAULT_CHARSET, _
+		DEFAULT_CHARSET, _
 		OUT_DEFAULT_PRECIS, _
 		CLIP_DEFAULT_PRECIS, _
 		DEFAULT_QUALITY, _
@@ -163,7 +163,7 @@ Sub CreatecmdButtons(ByVal hWin As HWND)
 	
 	txtLen = sz.cx
 	txtHght = sz.cy + 2
-	dlgWidth = txtLen * 8 + 16
+	dlgWidth = txtLen * 8 + 24
 	dlgHeight = dlgRect.bottom - dlgRect.top 			' we need to add room for bottom button row
 	clientHeight = dlgHeight  
 
