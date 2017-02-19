@@ -1,0 +1,11 @@
+'-----------------------------------------------------------------------------------------------------------------
+' AsciiChartA
+'-----------------------------------------------------------------------------------------------------------------
+This is an Addin for FBEdit that displays a chart of ASCII characters in a dialog.
+
+The user may select any single character. 
+That character is displayed in the textboxes at the bottom of the dialog.
+The '<<>>' button changes pages to/from showing characters 0 to 127 and characters 128 to 255.
+The 'Copy' button inserts the 'chr(xxx)' into the clip board.
+The 'Insert' button inserts the 'chr(xxx)' into the open editor page in FBEdit.
+The 'Exit' button closes the dialog.

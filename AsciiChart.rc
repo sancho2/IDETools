@@ -7,6 +7,7 @@
 #define lblValue 1102
 #define lblCopy 1103
 #define cmdPage 1107
+#define cmdInsert 1108
 
 dlgTest DIALOGEX 150,126,421,204
 CAPTION "ASCII Character Codes"
@@ -20,5 +21,6 @@ BEGIN
   CONTROL "",lblValue,"Static",0x50000001,84,186,36,15,0x00000200
   CONTROL "",lblCopy,"Static",0x50000001,123,186,72,15,0x00000200
   CONTROL "<<  >>",cmdPage,"Button",0x50010000,6,186,36,15
+  CONTROL "Insert",cmdInsert,"Button",0x50010000,342,180,36,15
 END
 
