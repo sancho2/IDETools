@@ -1,0 +1,36 @@
+#define IDD_DIALOG 1000
+#define lstColors 1001
+#define scbVert 1003
+#define lstRGB 1002
+#define IDC_STC1 1004
+#define IDC_STC2 1005
+#define lstOut 1006
+#define cmdAdd 1007
+#define cmdRemove 1009
+#define cmdExit 1008
+#define cmdInsert 1010
+#define cmdCopy 1011
+#define txtPrefix 1012
+#define IDC_STC3 1013
+
+IDD_DIALOG DIALOGEX -2,-16,421,262
+CAPTION "Color Selector"
+FONT 8,"MS Sans Serif",0,0,0
+CLASS "DLGCLASS"
+STYLE 0x10CF0000
+BEGIN
+  CONTROL "",lstColors,"ListBox",0x50010949,30,12,135,213,0x00000200
+  CONTROL "",scbVert,"ScrollBar",0x50000001,216,12,18,213
+  CONTROL "",lstRGB,"ListBox",0x50010949,165,12,51,213,0x00000200
+  CONTROL "Color Name",IDC_STC1,"Static",0x50000000,30,3,51,9
+  CONTROL "RGB",IDC_STC2,"Static",0x50000000,165,3,24,9
+  CONTROL "",lstOut,"ListBox",0x50010949,276,12,135,213,0x00000200
+  CONTROL ">>>",cmdAdd,"Button",0x50010000,240,12,30,15
+  CONTROL "<<<",cmdRemove,"Button",0x50010000,240,33,30,15
+  CONTROL "Exit",cmdExit,"Button",0x50010000,381,240,30,15
+  CONTROL "Insert",cmdInsert,"Button",0x58010000,237,240,30,15
+  CONTROL "Copy",cmdCopy,"Button",0x50010000,201,240,30,15
+  CONTROL "Const As ULong ",txtPrefix,"Edit",0x50010800,30,240,165,12,0x00000200
+  CONTROL "Prefix",IDC_STC3,"Static",0x50000000,30,231,51,9
+END
+
