@@ -10,10 +10,12 @@
 #define cmdExit 1008
 #define cmdInsert 1010
 #define cmdCopy 1011
-#define txtPrefix 1012
+#define txtConstant 1012
 #define IDC_STC3 1013
+#define txtPrefix 1014
+#define IDC_STC4 1015
 
-IDD_DIALOG DIALOGEX -2,-16,421,262
+IDD_DIALOG DIALOGEX 87,240,417,265
 CAPTION "Color Selector"
 FONT 8,"MS Sans Serif",0,0,0
 CLASS "DLGCLASS"
@@ -30,7 +32,9 @@ BEGIN
   CONTROL "Exit",cmdExit,"Button",0x50010000,381,240,30,15
   CONTROL "Insert",cmdInsert,"Button",0x58010000,237,240,30,15
   CONTROL "Copy",cmdCopy,"Button",0x50010000,201,240,30,15
-  CONTROL "Const As ULong ",txtPrefix,"Edit",0x50010800,30,240,165,12,0x00000200
-  CONTROL "Prefix",IDC_STC3,"Static",0x50000000,30,231,51,9
+  CONTROL "Const As ULong ",txtConstant,"Edit",0x50010800,30,240,57,12,0x00000200
+  CONTROL "Prefix",IDC_STC3,"Static",0x50000000,87,231,51,9
+  CONTROL "COLOR_",txtPrefix,"Edit",0x50010000,87,240,108,12,0x00000200
+  CONTROL "Constant",IDC_STC4,"Static",0x50000000,30,231,33,9
 END
 

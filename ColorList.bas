@@ -2,6 +2,9 @@
 ' ColorList - IDE Color selecting tool
 ' Sancho2 February 20, 2017
 '---------------------------------------------------------------------------------------------------------------
+#define GET_X_LPARAM(lp) clng(cshort(LOWORD(lp)))
+#define GET_Y_LPARAM(lp) clng(cshort(HIWORD(lp)))
+'#define GET_WHEEL_DELTA_WPARAM(wParam) cshort(HIWORD(wParam))
 
 #include once "windows.bi"
 #Include Once "win/commctrl.bi"
@@ -25,36 +28,81 @@ Declare Sub ChangeSelection(ByVal lstBox As HWND)
 Declare Sub AddItems()
 Declare Sub DeleteItems()
 Declare Sub CreateClipboardEntry()
+Declare Function IsPointOnScrollBar(ByVal x As Integer, ByVal y As Integer) As BOOLEAN
+Declare Function GetListBoxVisibleItems(ByVal hLst As HWND) As Integer
+Declare Function GetMaxTopIndex() As Integer
 '---------------------------------------------------------------------------------------------------------------
+Function IsDuplicateItem(byref item as string) as boolean
+	'
+	Dim As HWND hOut
+	Dim As Integer index		
+	hOut = GetDlgItem(hWnd, lstOut)
+	
+	index = SendMessage(hOut, LB_FINDSTRINGEXACT, -1, StrPtr(item))
+	If index = LB_ERR Then
+		Return FALSE 
+	EndIf
+
+	Return TRUE 
+ 	
+End Function
+
+Function GetListBoxVisibleItems(ByVal hLst As HWND) As Integer
+	'
+	Dim As Integer rowH
+	Dim As RECT r 
+	
+	rowH = SendMessage(hLst, LB_GETITEMHEIGHT, 0, 0)
+	GetClientRect(hLst, @r)
+	Return  (r.bottom - r.top) \ rowH  
+	
+End Function
+Function GetMaxTopIndex() As Integer
+	'
+	Dim As HWND hNames
+	Dim As Integer count, n
+	Dim As String s
+	
+	hNames = GetDlgItem(hWnd, lstNames)
+	count = SendMessage(hNames, LB_GETCOUNT, 0, 0)
+	n = GetListBoxVisibleItems(hNames)
+	
+	Return count - n + 1
+	
+End Function
+
 Sub CreateClipboardEntry()
 	'
-	Dim As HWND hOut, hPrefix
+	Dim As HWND hOut, hPrefix, hConstant
 	Dim As String txt, s
-	Dim As ZString * 256 z
+	Dim As ZString * 256 constant, prefix
 	Dim As Integer l, count, buffer(Any), index
 	
 	hOut = GetDlgItem(hWnd, lstOut)
+	hConstant = GetDlgItem(hWnd, txtConstant)
 	hPrefix = GetDlgItem(hWnd, txtPrefix)
+	
+	l = GetWindowTextLength(hConstant)
+	GetWindowText(hConstant, @constant, l)	
 
 	l = GetWindowTextLength(hPrefix)
-	GetWindowText(hPrefix, @z, l)	
-	
+	GetWindowText(hPrefix, @prefix, l + 1)	
+
 	hOut = GetDlgItem(hWnd, lstOut)
 	count = SendMessage(hOut, LB_GETCOUNT, 0, 0)
-	'ReDim buffer(1 To count)
 
 	txt = ""
-	s = z
+	s = constant + " " + prefix
 	For x As UByte = 0 To count - 1
 		txt += s
 		index = SendMessage(hOut, LB_GETITEMDATA, x, 0)
 		'SendMessage(hOut, LB_GETTEXT,  count,  Cast(LPARAM, @buffer(1)))
 		s = colors(index).Name
-		txt += " " + s
+		txt += s
 		txt += " = "
 		s = colors(index).ToRGBHex
 		txt = txt + "&H" + s  
-		s = ", _" + CRLF + Space(14)
+		s = ", _" + CRLF + Space(14) + prefix
 	Next
 
 	set_clipboard(txt)
@@ -95,11 +143,13 @@ Sub AddItems()
 	
 	For x As UByte = 1 To count
 		SendMessage(hNames, LB_GETTEXT, buffer(x), Cast(LPARAM, @z))
-		index = SendMessage(hNames, LB_GETITEMDATA, buffer(x), 0)
-		SendMessage(hOut, LB_ADDSTRING, 0, Cast(LPARAM, @z))
-		n = SendMessage(hOut, LB_GETCOUNT, 0, 0)
-		SendMessage(hOut, LB_SETSEL, TRUE, n - 1)
-		SendMessage(hOut, LB_SETITEMDATA, n - 1,  index)
+		If IsDuplicateItem(z) = FALSE  then
+			index = SendMessage(hNames, LB_GETITEMDATA, buffer(x), 0)
+			SendMessage(hOut, LB_ADDSTRING, 0, Cast(LPARAM, @z))
+			n = SendMessage(hOut, LB_GETCOUNT, 0, 0)
+			SendMessage(hOut, LB_SETSEL, TRUE, n - 1)
+			SendMessage(hOut, LB_SETITEMDATA, n - 1,  index)
+		EndIf
 	Next
 	'UnSelectItems(hNames)
 End Sub
@@ -218,6 +268,23 @@ Sub ChangeSelection(ByVal lstBox As HWND)
 	Next
 	
 End Sub
+Function IsPointOnScrollBar(ByVal x As Integer, ByVal y As Integer) As BOOLEAN
+	'
+	Dim As HWND hScroll
+	Dim As RECT r
+	Dim As Point p
+	
+	p = Type<Point>(x, y)
+	
+	hScroll = GetDlgItem(hWnd, scbVert)
+	GetWindowRect(hScroll, @r)
+	
+	r.left = 0		' include everyting on the left
+	
+	Return cbool(PtInRect(@r, p))	
+
+End Function
+
 Function WndProc(ByVal hWin As HWND,ByVal uMsg As UINT,ByVal wParam As WPARAM,ByVal lParam As LPARAM) As Integer
 	'
 	Dim As HBRUSH hB 
@@ -245,6 +312,27 @@ Function WndProc(ByVal hWin As HWND,ByVal uMsg As UINT,ByVal wParam As WPARAM,By
 			InitScroll(hWin)
 			CreateSwatches()
 
+		Case WM_MOUSEWHEEL
+			Dim As Integer xPos, yPos, amt
+			Dim As String s
+			
+			xPos = GET_X_LPARAM(lParam)
+			yPos = GET_Y_LPARAM(lParam)
+			's = Str(xPos)
+			If IsPointOnScrollBar(xPos, yPos) = TRUE Then
+				amt = GET_WHEEL_DELTA_WPARAM(wparam)
+				amt = amt/120
+				's = Str(amt)
+				'MessageBox(NULL, s, "X", MB_OK)
+				If amt < 0 Then
+					ListBox_ScrollDown(hWnd, -1 * amt)
+				Else
+					ListBox_ScrollUp(hWnd, amt)
+				EndIf
+				InvalidateSwatchRect()
+			EndIf 
+			
+		
 		Case WM_VSCROLL
 			Dim As Long hWord, lWord
 			Dim As String s
@@ -459,12 +547,16 @@ End Sub
 Sub ListBox_ScrollDown(ByVal hWin As HWND, ByVal amt As UByte)
 	'
 	Dim As HWND hNames, hRGB
-	Dim As UByte topIndex ', temp
+	Dim As UByte topIndex, maxTopIndex
 	
 	hRGB = GetDlgItem(hWin, lstRGB) 
 	hNames = GetDlgItem(hWin, lstNames)
 	topIndex = sendmessage(hNames, LB_GETTOPINDEX, 0, 0)
 	topIndex += amt
+	maxTopIndex = GetMaxTopIndex()
+	If topIndex > maxTopIndex Then
+		topIndex = maxTopIndex
+	EndIf
 
 	SendMessage(hNames, LB_SETTOPINDEX, topIndex, 0)
 	SendMessage(hRGB, LB_SETTOPINDEX, topIndex, 0)

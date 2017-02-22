@@ -8,7 +8,8 @@
 #Define cmdRemove 	1009
 #Define cmdInsert		1010
 #Define cmdCopy		1011
-#Define txtPrefix 	1012
+#Define txtConstant 	1012
+#Define txtPrefix 	1014
 
 #Define swatches 		1200
 
