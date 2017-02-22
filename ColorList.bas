@@ -1,6 +1,7 @@
 '---------------------------------------------------------------------------------------------------------------
 ' ColorList - IDE Color selecting tool
-' Sancho2 February 20, 2017
+'
+' Sancho2 February 21, 2017 version 1.5
 '---------------------------------------------------------------------------------------------------------------
 #define GET_X_LPARAM(lp) clng(cshort(LOWORD(lp)))
 #define GET_Y_LPARAM(lp) clng(cshort(HIWORD(lp)))
