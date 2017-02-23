@@ -1,9 +1,11 @@
 '---------------------------------------------------------------------------------------------------------------
 ' ColorList - IDE Color selecting tool
 '
-' Sancho2 February 21, 2017 version 1.5
+' Sancho2 February 21, 2017 version 1.5.1
+' 1.5.1: Fixed exe freeze when copy is pressed with no items in the out list 
 '---------------------------------------------------------------------------------------------------------------
-#define GET_X_LPARAM(lp) clng(cshort(LOWORD(lp)))
+Dim Shared As BOOLEAN OkToEvent = TRUE
+#Define GET_X_LPARAM(lp) clng(cshort(LOWORD(lp)))
 #define GET_Y_LPARAM(lp) clng(cshort(HIWORD(lp)))
 '#define GET_WHEEL_DELTA_WPARAM(wParam) cshort(HIWORD(wParam))
 
@@ -39,7 +41,7 @@ Function IsDuplicateItem(byref item as string) as boolean
 	Dim As Integer index		
 	hOut = GetDlgItem(hWnd, lstOut)
 	
-	index = SendMessage(hOut, LB_FINDSTRINGEXACT, -1, StrPtr(item))
+	index = SendMessage(hOut, LB_FINDSTRINGEXACT, -1, Cast(WPARAM, StrPtr(item)))
 	If index = LB_ERR Then
 		Return FALSE 
 	EndIf
@@ -91,7 +93,9 @@ Sub CreateClipboardEntry()
 
 	hOut = GetDlgItem(hWnd, lstOut)
 	count = SendMessage(hOut, LB_GETCOUNT, 0, 0)
-
+	If count < 1 Then
+		Exit Sub
+	EndIf
 	txt = ""
 	s = constant + " " + prefix
 	For x As UByte = 0 To count - 1
@@ -285,12 +289,32 @@ Function IsPointOnScrollBar(ByVal x As Integer, ByVal y As Integer) As BOOLEAN
 	Return cbool(PtInRect(@r, p))	
 
 End Function
+Sub WHereSwatch(ByVal index As Integer)
+	'
+	Dim As String s
+	Dim As HWND hSwatch
+	Dim As RECT r
+	s =Str(index - 1 + swatches)
+	MessageBox(NULL, StrPtr(s), "hello",MB_OK)
+	'End
+	hSwatch = GetDlgItem(hWnd, index + swatches)
+	s =Str(hSwatch)
+	MessageBox(NULL, s, "hello",MB_OK)
+	getwindowrect(hSwatch, @r)
+	
+	s = Str(r.left) + " " + Str(r.top) + " " + Str(r.right) + " " + Str(r.bottom)
+	
+	MessageBox(NULL, s, "hello",MB_OK) 
+	
+End Sub
 
 Function WndProc(ByVal hWin As HWND,ByVal uMsg As UINT,ByVal wParam As WPARAM,ByVal lParam As LPARAM) As Integer
 	'
 	Dim As HBRUSH hB 
 	Dim As Integer id
+	'Static test As Integer = 0
 	Select Case uMsg
+		
 
 		Case WM_CTLCOLORSTATIC 
 			id = GetDlgCtrlID(Cast(HWND, lParam))
@@ -364,11 +388,16 @@ Function WndProc(ByVal hWin As HWND,ByVal uMsg As UINT,ByVal wParam As WPARAM,By
 				Case LBN_DBLCLK
 					AddItems()
 				Case LBN_SELCHANGE
-					ChangeSelection(Cast(HWND, lParam))
+					If OkToEvent Then
+						OkToEvent = FALSE
+						ChangeSelection(Cast(HWND, lParam))
+						OkToEvent = TRUE 
+					EndIf
 
 				Case BN_CLICKED,1
 					Select Case LoWord(wParam)
 						Case cmdCopy
+							WHereSwatch(1)
 							CreateClipboardEntry()
 						Case cmdRemove
 							DeleteItems()
